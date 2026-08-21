@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // Proxy /api calls to Django during local development
       "/api": {
-        target: "http://localhost:8000",
+        target: process.env.VITE_API_BASE_URL ?? "http://localhost:8000",
         changeOrigin: true,
       },
     },
