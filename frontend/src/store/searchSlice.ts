@@ -109,7 +109,9 @@ const searchSlice = createSlice({
         // Don't override a cached result with an error
         if (!state.fromCache) {
           state.status = "error";
-          state.error = (action.payload as string) ?? "Something went wrong.";
+          const raw = action.payload ?? action.error?.message ?? "Something went wrong.";
+          // Always store a string — objects would cause React render error #31
+          state.error = typeof raw === "string" ? raw : JSON.stringify(raw);
           state.items = [];
           state.totalCount = 0;
         }
