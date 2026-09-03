@@ -12,3 +12,4 @@ pytest-cov==6.0.0
 factory-boy==3.3.1
 gunicorn==22.0.0
 whitenoise==6.7.0
+whitenoise==6.12.0

@@ -43,7 +43,7 @@ def search_github(entity_type: str, query: str) -> dict[str, Any]:
 
     try:
         response = requests.get(
-            endpoint, headers=_build_github_headers(), params=params, timeout=10
+            endpoint, headers=_build_github_headers(), params=params, timeout=30
         )
     except requests.exceptions.Timeout as exc:
         logger.error("GitHub API timeout: %s", exc)
@@ -76,7 +76,7 @@ def search_gitlab(entity_type: str, query: str) -> dict[str, Any]:
         params = {"search": query, "per_page": per_page}
         
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=30)
     except requests.exceptions.RequestException as exc:
         raise GitAPIError(f"Failed to reach GitLab API: {exc}", status_code=502) from exc
 
@@ -141,7 +141,7 @@ def search_codeberg(entity_type: str, query: str) -> dict[str, Any]:
         params = {"q": query, "limit": per_page}
         
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, timeout=30)
     except requests.exceptions.RequestException as exc:
         raise GitAPIError(f"Failed to reach Codeberg API: {exc}", status_code=502) from exc
 

@@ -102,15 +102,27 @@ export default function RepoCard({ repo }: RepoCardProps) {
         )}
 
         {/* Stars */}
-        <span className="repo-card__stat" aria-label={`${repo.stargazers_count} stars`}>
+        <a
+          href={`${repo.html_url}/stargazers`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="repo-card__stat repo-card__stat--link"
+          aria-label={`${repo.stargazers_count} stars`}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
           {formatNumber(repo.stargazers_count)}
-        </span>
+        </a>
 
         {/* Forks */}
-        <span className="repo-card__stat" aria-label={`${repo.forks_count} forks`}>
+        <a
+          href={`${repo.html_url}/forks`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="repo-card__stat repo-card__stat--link"
+          aria-label={`${repo.forks_count} forks`}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
             <line x1={6} y1={3} x2={6} y2={15} />
             <circle cx={18} cy={6} r={3} />
@@ -119,7 +131,7 @@ export default function RepoCard({ repo }: RepoCardProps) {
             <path d="M18 9a9 9 0 0 1-9 9" />
           </svg>
           {formatNumber(repo.forks_count)}
-        </span>
+        </a>
 
         {/* Updated */}
         <span className="repo-card__stat" aria-label={`Updated ${timeAgo(repo.updated_at)}`}>

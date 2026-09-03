@@ -518,6 +518,15 @@ button {
   color: var(--color-text-secondary);
 }
 
+.repo-card__stat--link {
+  transition: color var(--transition-fast);
+}
+
+.repo-card__stat--link:hover {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
 .repo-card__stat svg {
   width: 14px;
   height: 14px;
