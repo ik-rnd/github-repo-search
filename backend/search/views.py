@@ -173,3 +173,19 @@ class ClearCacheView(APIView):
             {"message": "Cache cleared successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class PingView(APIView):
+    """
+    Extremely lightweight endpoint to keep the Render free tier awake.
+    """
+
+    @extend_schema(
+        request=None,
+        responses={200: OpenApiResponse(description="Pong")},
+        summary="Ping",
+        description="Health check endpoint for cron-job.org to prevent Render from spinning down.",
+        tags=["Health"],
+    )
+    def get(self, request: Request) -> Response:
+        return Response({"status": "ok", "message": "pong"}, status=status.HTTP_200_OK)

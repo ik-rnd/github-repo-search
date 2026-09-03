@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: github-repo-search-backend
+    env: python
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && python manage.py migrate"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "github-repo-search-backend.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # Set this in Render Dashboard to your Vercel URL
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false # Set this in Render Dashboard to your Vercel URL
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: REDIS_URL
+        sync: false # Set this to your Upstash Redis URL

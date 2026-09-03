@@ -12,4 +12,5 @@ from . import views
 urlpatterns = [
     path("search/", views.SearchView.as_view(), name="search"),
     path("clear-cache/", views.ClearCacheView.as_view(), name="clear-cache"),
+    path("ping/", views.PingView.as_view(), name="ping"),
 ]

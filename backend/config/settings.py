@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -135,6 +136,7 @@ GITHUB_SEARCH_PER_PAGE = 30
 # Static files
 # ---------------------------------------------------------------------------
 STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ---------------------------------------------------------------------------
 # Internationalisation (minimal)
