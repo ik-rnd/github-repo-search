@@ -9,13 +9,15 @@ const apiClient = axios.create({
   timeout: 15_000,
 });
 
-export async function searchGitHub(
+export async function searchProvider(
   query: string,
-  entityType: EntityType
+  entityType: EntityType,
+  provider: string
 ): Promise<SearchResponse> {
   const response = await apiClient.post<SearchResponse>("/search/", {
     query,
     entity_type: entityType,
+    provider,
   });
   return response.data;
 }

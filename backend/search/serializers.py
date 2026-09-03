@@ -19,6 +19,10 @@ class SearchRequestSerializer(serializers.Serializer):
         choices=ENTITY_TYPES,
         help_text="The type of entity to search for: 'users' or 'repositories'.",
     )
+    provider = serializers.ChoiceField(
+        choices=["github", "gitlab", "codeberg"],
+        help_text="The git provider to search on.",
+    )
 
 
 class OwnerSerializer(serializers.Serializer):

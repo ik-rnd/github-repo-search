@@ -21,7 +21,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .github_client import GitHubAPIError, search_github
+from .git_client import GitAPIError, search_provider
 from .serializers import SearchRequestSerializer, SearchResponseSerializer
 
 logger = logging.getLogger(__name__)
@@ -29,14 +29,14 @@ logger = logging.getLogger(__name__)
 CACHE_TTL: int = getattr(settings, "CACHE_TTL", 60 * 60 * 2)  # default 2 h
 
 
-def _build_cache_key(entity_type: str, query: str) -> str:
+def _build_cache_key(provider: str, entity_type: str, query: str) -> str:
     """Return a deterministic Redis key for a given search."""
-    return f"{entity_type}:{query.lower().strip()}"
+    return f"{provider}:{entity_type}:{query.lower().strip()}"
 
 
 class SearchView(APIView):
     """
-    Search GitHub users or repositories.
+    Search Git users or repositories.
 
     Results are cached in Redis for 2 hours. A cache hit is indicated by
     the ``cached: true`` flag in the response body.
@@ -80,9 +80,9 @@ class SearchView(APIView):
             429: OpenApiResponse(description="GitHub API rate limit exceeded."),
             502: OpenApiResponse(description="GitHub API error."),
         },
-        summary="Search GitHub",
+        summary="Search Git",
         description=(
-            "Search GitHub users or repositories by keyword. "
+            "Search Git users or repositories by keyword. "
             "Results are cached in Redis for 2 hours; subsequent identical "
             "requests will be served from cache without hitting GitHub."
         ),
@@ -98,7 +98,8 @@ class SearchView(APIView):
 
         query: str = serializer.validated_data["query"]
         entity_type: str = serializer.validated_data["entity_type"]
-        cache_key = _build_cache_key(entity_type, query)
+        provider: str = serializer.validated_data["provider"]
+        cache_key = _build_cache_key(provider, entity_type, query)
 
         # --- Cache lookup ---
         cached_data = cache.get(cache_key)
@@ -107,13 +108,13 @@ class SearchView(APIView):
             cached_data["cached"] = True
             return Response(cached_data, status=status.HTTP_200_OK)
 
-        # --- GitHub API call ---
+        # --- Git API call ---
         logger.info(
-            "Cache miss for key '%s'. Fetching from GitHub.", cache_key
+            "Cache miss for key '%s'. Fetching from %s.", cache_key, provider
         )
         try:
-            data = search_github(entity_type=entity_type, query=query)
-        except GitHubAPIError as exc:
+            data = search_provider(provider=provider, entity_type=entity_type, query=query)
+        except GitAPIError as exc:
             return Response(
                 {"error": str(exc)},
                 status=exc.status_code,

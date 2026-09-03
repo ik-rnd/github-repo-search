@@ -1,17 +1,17 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { searchGitHub } from "../api/searchApi";
-import type { CachedResult, EntityType, SearchItem, SearchState } from "../types";
+import { searchProvider } from "../api/searchApi";
+import type { CachedResult, EntityType, GitProvider, SearchItem, SearchState } from "../types";
 
 // ---- Async thunk ----
 
 export const fetchResults = createAsyncThunk(
   "search/fetchResults",
   async (
-    { query, entityType }: { query: string; entityType: EntityType },
+    { query, entityType, provider }: { query: string; entityType: EntityType; provider: GitProvider },
     { rejectWithValue }
   ) => {
     try {
-      const data = await searchGitHub(query, entityType);
+      const data = await searchProvider(query, entityType, provider);
       return data;
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
@@ -29,6 +29,7 @@ export const fetchResults = createAsyncThunk(
 
 const initialState: SearchState = {
   query: "",
+  provider: "github",
   entityType: "repositories",
   status: "idle",
   error: null,
@@ -40,8 +41,8 @@ const initialState: SearchState = {
 
 // ---- Cache key helper ----
 
-export const buildCacheKey = (query: string, entityType: EntityType): string =>
-  `${query.toLowerCase().trim()}:${entityType}`;
+export const buildCacheKey = (provider: GitProvider, query: string, entityType: EntityType): string =>
+  `${provider}:${query.toLowerCase().trim()}:${entityType}`;
 
 // ---- Slice ----
 
@@ -51,6 +52,9 @@ const searchSlice = createSlice({
   reducers: {
     setQuery(state, action: PayloadAction<string>) {
       state.query = action.payload;
+    },
+    setProvider(state, action: PayloadAction<GitProvider>) {
+      state.provider = action.payload;
     },
     setEntityType(state, action: PayloadAction<EntityType>) {
       state.entityType = action.payload;
@@ -69,8 +73,8 @@ const searchSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchResults.pending, (state, action) => {
-        const { query, entityType } = action.meta.arg;
-        const cacheKey = buildCacheKey(query, entityType);
+        const { query, entityType, provider } = action.meta.arg;
+        const cacheKey = buildCacheKey(provider, query, entityType);
         const cached = state.cache[cacheKey] as CachedResult | undefined;
 
         if (cached) {
@@ -87,8 +91,8 @@ const searchSlice = createSlice({
         }
       })
       .addCase(fetchResults.fulfilled, (state, action) => {
-        const { query, entityType } = action.meta.arg;
-        const cacheKey = buildCacheKey(query, entityType);
+        const { query, entityType, provider } = action.meta.arg;
+        const cacheKey = buildCacheKey(provider, query, entityType);
 
         // Only update if this is actually a fresh result (not pre-empted by cache)
         if (!state.fromCache) {
@@ -119,7 +123,7 @@ const searchSlice = createSlice({
   },
 });
 
-export const { setQuery, setEntityType, clearResults, clearCache: clearReduxCache } =
+export const { setQuery, setProvider, setEntityType, clearResults, clearCache: clearReduxCache } =
   searchSlice.actions;
 
 export default searchSlice.reducer;

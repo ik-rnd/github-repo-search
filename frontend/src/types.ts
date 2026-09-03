@@ -2,6 +2,8 @@
  * Type definitions shared across the frontend.
  */
 
+export type GitProvider = "github" | "gitlab" | "codeberg";
+
 export type EntityType = "users" | "repositories";
 
 export type SearchStatus = "idle" | "loading" | "success" | "error";
@@ -58,6 +60,7 @@ export interface CachedResult {
 
 export interface SearchState {
   query: string;
+  provider: GitProvider;
   entityType: EntityType;
   status: SearchStatus;
   error: string | null;

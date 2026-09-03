@@ -2,7 +2,7 @@
 URL patterns for the search application.
 
 Endpoints:
-    POST /api/search/       — search GitHub users or repositories
+    POST /api/search/       — search Git users or repositories
     POST /api/clear-cache/  — flush all cached search results from Redis
 """
 from django.urls import path

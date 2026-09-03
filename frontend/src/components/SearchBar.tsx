@@ -3,12 +3,13 @@ import debounce from "lodash/debounce";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setQuery,
+  setProvider,
   setEntityType,
   fetchResults,
   clearResults,
   buildCacheKey,
 } from "../store/searchSlice";
-import type { EntityType } from "../types";
+import type { EntityType, GitProvider } from "../types";
 
 const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_DELAY_MS = 400;
@@ -20,6 +21,7 @@ interface SearchBarProps {
 export default function SearchBar({ compact = false }: SearchBarProps) {
   const dispatch = useAppDispatch();
   const query = useAppSelector((s) => s.search.query);
+  const provider = useAppSelector((s) => s.search.provider);
   const entityType = useAppSelector((s) => s.search.entityType);
   const cache = useAppSelector((s) => s.search.cache);
 
@@ -28,14 +30,14 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
   // Debounced search — recreated only when dispatch changes (stable)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
-    debounce((q: string, type: EntityType) => {
+    debounce((q: string, type: EntityType, prov: GitProvider) => {
       if (q.length >= MIN_QUERY_LENGTH) {
-        const cacheKey = buildCacheKey(q, type);
+        const cacheKey = buildCacheKey(prov, q, type);
         if (!cache[cacheKey]) {
-          dispatch(fetchResults({ query: q, entityType: type }));
+          dispatch(fetchResults({ query: q, entityType: type, provider: prov }));
         } else {
           // Serve from front-end cache immediately
-          dispatch(fetchResults({ query: q, entityType: type }));
+          dispatch(fetchResults({ query: q, entityType: type, provider: prov }));
         }
       } else {
         dispatch(clearResults());
@@ -50,7 +52,16 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     dispatch(setQuery(value));
-    debouncedSearch(value, entityType);
+    debouncedSearch(value, entityType, provider);
+  };
+
+  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newProv = e.target.value as GitProvider;
+    dispatch(setProvider(newProv));
+    if (query.length >= MIN_QUERY_LENGTH) {
+      debouncedSearch.cancel();
+      dispatch(fetchResults({ query, entityType, provider: newProv }));
+    }
   };
 
   const handleEntityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -59,7 +70,7 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
     // Immediately re-fetch if enough characters already typed
     if (query.length >= MIN_QUERY_LENGTH) {
       debouncedSearch.cancel();
-      dispatch(fetchResults({ query, entityType: type }));
+      dispatch(fetchResults({ query, entityType: type, provider }));
     }
   };
 
@@ -95,11 +106,12 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
           ref={inputRef}
           type="search"
           className="search-input"
-          placeholder="Start typing to search…"
+          placeholder="Type at least 3 characters to start searching"
           value={query}
           onChange={handleQueryChange}
+          autoFocus
           autoComplete="off"
-          aria-label="Search GitHub users or repositories"
+          aria-label="Search Git users or repositories"
           aria-describedby="search-hint"
         />
 
@@ -128,6 +140,18 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
       </div>
 
       <select
+        id="provider-select"
+        className="search-dropdown"
+        value={provider}
+        onChange={handleProviderChange}
+        aria-label="Git provider"
+      >
+        <option value="codeberg">Codeberg</option>
+        <option value="github">GitHub</option>
+        <option value="gitlab">GitLab</option>
+      </select>
+
+      <select
         id="entity-type-select"
         className="search-dropdown"
         value={entityType}
@@ -137,10 +161,6 @@ export default function SearchBar({ compact = false }: SearchBarProps) {
         <option value="repositories">Repositories</option>
         <option value="users">Users</option>
       </select>
-
-      <span id="search-hint" className="visually-hidden">
-        Type at least 3 characters to start searching
-      </span>
     </div>
   );
 }

@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from rest_framework import status
 
-from search.github_client import GitHubAPIError
+from search.git_client import GitAPIError
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / constants
@@ -69,7 +69,7 @@ MOCK_USER_RESPONSE: dict[str, Any] = {
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_search_repos_returns_200(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
@@ -85,7 +85,7 @@ def test_search_repos_returns_200(mock_gh, api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_github_called_once_on_cache_miss(mock_gh, api_client):
     api_client.post(
         SEARCH_URL,
@@ -96,7 +96,7 @@ def test_github_called_once_on_cache_miss(mock_gh, api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_second_request_served_from_cache(mock_gh, api_client):
     """GitHub API must NOT be called on the second identical request."""
     api_client.post(
@@ -115,7 +115,7 @@ def test_second_request_served_from_cache(mock_gh, api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_query_cache_is_case_insensitive(mock_gh, api_client):
     """'Django' and 'django' should share the same cache entry."""
     api_client.post(
@@ -138,7 +138,7 @@ def test_query_cache_is_case_insensitive(mock_gh, api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_USER_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_USER_RESPONSE)
 def test_search_users_returns_200(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
@@ -152,7 +152,7 @@ def test_search_users_returns_200(mock_gh, api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_different_entity_types_have_separate_cache_keys(mock_gh, api_client):
     """Same query + different entity_type → separate cache entries."""
     api_client.post(
@@ -226,8 +226,8 @@ def test_empty_body_returns_400(api_client):
 
 @pytest.mark.django_db
 @patch(
-    "search.views.search_github",
-    side_effect=GitHubAPIError("GitHub API rate limit exceeded.", status_code=429),
+    "search.views.search_provider",
+    side_effect=GitAPIError("GitHub API rate limit exceeded.", status_code=429),
 )
 def test_rate_limit_returns_429(mock_gh, api_client):
     response = api_client.post(
@@ -241,8 +241,8 @@ def test_rate_limit_returns_429(mock_gh, api_client):
 
 @pytest.mark.django_db
 @patch(
-    "search.views.search_github",
-    side_effect=GitHubAPIError("GitHub API error: 502", status_code=502),
+    "search.views.search_provider",
+    side_effect=GitAPIError("GitHub API error: 502", status_code=502),
 )
 def test_github_502_returns_502(mock_gh, api_client):
     response = api_client.post(
@@ -266,7 +266,7 @@ def test_clear_cache_returns_200(api_client):
 
 
 @pytest.mark.django_db
-@patch("search.views.search_github", return_value=MOCK_REPO_RESPONSE)
+@patch("search.views.search_provider", return_value=MOCK_REPO_RESPONSE)
 def test_clear_cache_invalidates_cached_results(mock_gh, api_client):
     # Populate cache
     api_client.post(
@@ -300,8 +300,8 @@ def test_clear_cache_invalidates_cached_results(mock_gh, api_client):
 # ---------------------------------------------------------------------------
 
 
-@patch("search.github_client.requests.get")
-def test_github_client_successful_repo_search(mock_get):
+@patch("search.git_client.requests.get")
+def test_git_client_successful_repo_search(mock_get):
     mock_response = MagicMock()
     mock_response.ok = True
     mock_response.status_code = 200
@@ -311,43 +311,43 @@ def test_github_client_successful_repo_search(mock_get):
     }
     mock_get.return_value = mock_response
 
-    from search.github_client import search_github
+    from search.git_client import search_provider
 
-    result = search_github("repositories", "django")
+    result = search_provider("repositories", "django")
     assert result["total_count"] == 1
     assert result["entity_type"] == "repositories"
     mock_get.assert_called_once()
 
 
-@patch("search.github_client.requests.get")
-def test_github_client_rate_limit_raises_error(mock_get):
+@patch("search.git_client.requests.get")
+def test_git_client_rate_limit_raises_error(mock_get):
     mock_response = MagicMock()
     mock_response.ok = False
     mock_response.status_code = 403
     mock_get.return_value = mock_response
 
-    from search.github_client import search_github
+    from search.git_client import search_provider
 
-    with pytest.raises(GitHubAPIError) as exc_info:
-        search_github("repositories", "django")
+    with pytest.raises(GitAPIError) as exc_info:
+        search_provider("repositories", "django")
     assert exc_info.value.status_code == 429
 
 
-@patch("search.github_client.requests.get")
-def test_github_client_timeout_raises_error(mock_get):
+@patch("search.git_client.requests.get")
+def test_git_client_timeout_raises_error(mock_get):
     import requests as req
 
     mock_get.side_effect = req.exceptions.Timeout("timed out")
 
-    from search.github_client import search_github
+    from search.git_client import search_provider
 
-    with pytest.raises(GitHubAPIError) as exc_info:
-        search_github("users", "octocat")
+    with pytest.raises(GitAPIError) as exc_info:
+        search_provider("users", "octocat")
     assert exc_info.value.status_code == 504
 
 
-def test_github_client_invalid_entity_type():
-    from search.github_client import search_github
+def test_git_client_invalid_entity_type():
+    from search.git_client import search_provider
 
     with pytest.raises(ValueError, match="Unsupported entity_type"):
-        search_github("issues", "test")
+        search_provider("issues", "test")

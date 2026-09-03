@@ -1,13 +1,13 @@
 # GitHub Searcher 🔍
 
-A full-stack single-page application to search GitHub users and repositories in real-time, with Redis-backed server-side caching and Redux client-side caching.
+A full-stack single-page application to search Git users and repositories in real-time, with Redis-backed server-side caching and Redux client-side caching.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | **Frontend** | React 18 + TypeScript, Vite, Vanilla CSS, Redux Toolkit, redux-persist, React Router, lodash |
 | **Backend** | Django 5 + Django REST Framework |
 | **Cache** | Redis (via django-redis), 2-hour TTL |
@@ -112,7 +112,7 @@ npm run dev
 ### `backend/.env`
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `DEBUG` | `True` | Django debug mode |
 | `SECRET_KEY` | (insecure default) | Django secret key — **change in production** |
 | `GITHUB_TOKEN` | _(empty)_ | GitHub Personal Access Token — increases rate limit from 10 to 30 req/min |
@@ -126,9 +126,10 @@ npm run dev
 
 ### `POST /api/search/`
 
-Search GitHub users or repositories.
+Search Git users or repositories.
 
 **Request body:**
+
 ```json
 {
   "query": "django",
@@ -137,11 +138,12 @@ Search GitHub users or repositories.
 ```
 
 | Field | Type | Constraints |
-|---|---|---|
+| --- | --- | --- |
 | `query` | string | min 3, max 256 characters |
 | `entity_type` | string | `"users"` or `"repositories"` |
 
 **Response 200:**
+
 ```json
 {
   "total_count": 12345,
@@ -158,6 +160,7 @@ Search GitHub users or repositories.
 Flush all Redis-cached search results.
 
 **Response 200:**
+
 ```json
 { "message": "Cache cleared successfully." }
 ```

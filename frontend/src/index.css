@@ -191,6 +191,7 @@ button {
   display: flex;
   gap: var(--sp-3);
   align-items: stretch;
+  width: 100%;
 }
 
 /* Centered / hero state */
@@ -223,6 +224,8 @@ button {
 /* Input wrapper */
 .search-input-wrapper {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
 .search-input-icon {

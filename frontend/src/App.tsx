@@ -29,7 +29,7 @@ export default function App() {
             </div>
 
             <div>
-              <h2 className="hero__title">Search GitHub</h2>
+              <h2 className="hero__title">Search Git</h2>
               <p className="hero__subtitle">
                 Find repositories and developers across millions of projects.
               </p>
