@@ -73,7 +73,7 @@ MOCK_USER_RESPONSE: dict[str, Any] = {
 def test_search_repos_returns_200(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.status_code == status.HTTP_200_OK
@@ -89,10 +89,10 @@ def test_search_repos_returns_200(mock_gh, api_client):
 def test_github_called_once_on_cache_miss(mock_gh, api_client):
     api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
-    mock_gh.assert_called_once_with(entity_type="repositories", query="django")
+    mock_gh.assert_called_once_with(provider="github", entity_type="repositories", query="django")
 
 
 @pytest.mark.django_db
@@ -101,12 +101,12 @@ def test_second_request_served_from_cache(mock_gh, api_client):
     """GitHub API must NOT be called on the second identical request."""
     api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.status_code == status.HTTP_200_OK
@@ -120,12 +120,12 @@ def test_query_cache_is_case_insensitive(mock_gh, api_client):
     """'Django' and 'django' should share the same cache entry."""
     api_client.post(
         SEARCH_URL,
-        data={"query": "Django", "entity_type": "repositories"},
+        data={"query": "Django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.json()["cached"] is True
@@ -142,7 +142,7 @@ def test_query_cache_is_case_insensitive(mock_gh, api_client):
 def test_search_users_returns_200(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "octocat", "entity_type": "users"},
+        data={"query": "octocat", "entity_type": "users", "provider": "github"},
         format="json",
     )
     assert response.status_code == status.HTTP_200_OK
@@ -157,14 +157,14 @@ def test_different_entity_types_have_separate_cache_keys(mock_gh, api_client):
     """Same query + different entity_type → separate cache entries."""
     api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     # Switch entity type — override the mock return for the second call
     mock_gh.return_value = MOCK_USER_RESPONSE
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "users"},
+        data={"query": "django", "entity_type": "users", "provider": "github"},
         format="json",
     )
     assert response.json()["cached"] is False
@@ -179,7 +179,7 @@ def test_different_entity_types_have_separate_cache_keys(mock_gh, api_client):
 @pytest.mark.django_db
 def test_missing_query_returns_400(api_client):
     response = api_client.post(
-        SEARCH_URL, data={"entity_type": "repositories"}, format="json"
+        SEARCH_URL, data={"entity_type": "repositories", "provider": "github"}, format="json"
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "details" in response.json()
@@ -189,7 +189,7 @@ def test_missing_query_returns_400(api_client):
 def test_short_query_returns_400(api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "ab", "entity_type": "repositories"},
+        data={"query": "ab", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -198,7 +198,7 @@ def test_short_query_returns_400(api_client):
 @pytest.mark.django_db
 def test_missing_entity_type_returns_400(api_client):
     response = api_client.post(
-        SEARCH_URL, data={"query": "django"}, format="json"
+        SEARCH_URL, data={"query": "django", "provider": "github"}, format="json"
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -207,7 +207,7 @@ def test_missing_entity_type_returns_400(api_client):
 def test_invalid_entity_type_returns_400(api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "issues"},
+        data={"query": "django", "entity_type": "issues", "provider": "github"},
         format="json",
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -232,7 +232,7 @@ def test_empty_body_returns_400(api_client):
 def test_rate_limit_returns_429(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.status_code == 429
@@ -247,7 +247,7 @@ def test_rate_limit_returns_429(mock_gh, api_client):
 def test_github_502_returns_502(mock_gh, api_client):
     response = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert response.status_code == 502
@@ -271,13 +271,13 @@ def test_clear_cache_invalidates_cached_results(mock_gh, api_client):
     # Populate cache
     api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     # Confirm cached
     second = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert second.json()["cached"] is True
@@ -288,7 +288,7 @@ def test_clear_cache_invalidates_cached_results(mock_gh, api_client):
     # Next request should be a cache miss
     third = api_client.post(
         SEARCH_URL,
-        data={"query": "django", "entity_type": "repositories"},
+        data={"query": "django", "entity_type": "repositories", "provider": "github"},
         format="json",
     )
     assert third.json()["cached"] is False
@@ -313,7 +313,7 @@ def test_git_client_successful_repo_search(mock_get):
 
     from search.git_client import search_provider
 
-    result = search_provider("repositories", "django")
+    result = search_provider("github", "repositories", "django")
     assert result["total_count"] == 1
     assert result["entity_type"] == "repositories"
     mock_get.assert_called_once()
@@ -329,7 +329,7 @@ def test_git_client_rate_limit_raises_error(mock_get):
     from search.git_client import search_provider
 
     with pytest.raises(GitAPIError) as exc_info:
-        search_provider("repositories", "django")
+        search_provider("github", "repositories", "django")
     assert exc_info.value.status_code == 429
 
 
@@ -342,7 +342,7 @@ def test_git_client_timeout_raises_error(mock_get):
     from search.git_client import search_provider
 
     with pytest.raises(GitAPIError) as exc_info:
-        search_provider("users", "octocat")
+        search_provider("github", "users", "octocat")
     assert exc_info.value.status_code == 504
 
 
@@ -350,4 +350,4 @@ def test_git_client_invalid_entity_type():
     from search.git_client import search_provider
 
     with pytest.raises(ValueError, match="Unsupported entity_type"):
-        search_provider("issues", "test")
+        search_provider("github", "issues", "test")

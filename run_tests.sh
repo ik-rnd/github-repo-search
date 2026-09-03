@@ -3,8 +3,10 @@ set -e
 
 echo "Running backend tests..."
 cd backend
-# Make sure to run in the virtual environment if it exists, or just use pytest directly.
-pytest
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
+fi
+python -m pytest
 cd ..
 
 echo "Running frontend tests..."
