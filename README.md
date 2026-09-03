@@ -175,6 +175,18 @@ Visit [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/) for ful
 
 ## Running Tests
 
+### Combined Test Runner (Recommended)
+
+You can run both frontend and backend tests using the provided shell script from the project root:
+
+```bash
+./run_tests.sh
+```
+
+A Git `pre-commit` hook is also configured to run this script automatically before every commit to ensure that code quality remains high.
+
+### Backend (Python/Django)
+
 ```bash
 cd backend
 
@@ -187,6 +199,18 @@ pytest
 # Coverage report
 pytest --cov=search --cov-report=html
 open htmlcov/index.html
+```
+
+### Frontend (React/Vite)
+
+```bash
+cd frontend
+
+# Install dependencies if you haven't already
+npm install
+
+# Run Vitest tests
+npm run test
 ```
 
 Test coverage includes:
