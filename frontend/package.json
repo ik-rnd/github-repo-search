@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "restart:be": "cd ../backend && source .venv/bin/activate &&python manage.py runserver",
     "test": "vitest run"
   },
   "dependencies": {
