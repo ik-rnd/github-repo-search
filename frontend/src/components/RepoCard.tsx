@@ -1,4 +1,5 @@
 import type { GitHubRepository } from "../types";
+import { useAppSelector } from "../store/hooks";
 
 // Language colour map (subset of GitHub's language colours)
 const LANG_COLORS: Record<string, string> = {
@@ -47,6 +48,12 @@ interface RepoCardProps {
 
 export default function RepoCard({ repo }: RepoCardProps) {
   const langColor = repo.language ? (LANG_COLORS[repo.language] ?? "#8b949e") : null;
+  const provider = useAppSelector((s) => s.search.provider);
+  const authTokens = useAppSelector((s) => (s as any).auth?.tokens || {});
+
+  const handleAction = () => {
+    window.open(repo.html_url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <article className="repo-card" aria-label={`Repository: ${repo.full_name}`}>
@@ -102,10 +109,8 @@ export default function RepoCard({ repo }: RepoCardProps) {
         )}
 
         {/* Stars */}
-        <a
-          href={`${repo.html_url}/stargazers`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => handleAction()}
           className="repo-card__stat repo-card__stat--link"
           aria-label={`${repo.stargazers_count} stars`}
         >
@@ -113,13 +118,11 @@ export default function RepoCard({ repo }: RepoCardProps) {
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
           {formatNumber(repo.stargazers_count)}
-        </a>
+        </button>
 
         {/* Forks */}
-        <a
-          href={`${repo.html_url}/forks`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => handleAction()}
           className="repo-card__stat repo-card__stat--link"
           aria-label={`${repo.forks_count} forks`}
         >
@@ -131,7 +134,7 @@ export default function RepoCard({ repo }: RepoCardProps) {
             <path d="M18 9a9 9 0 0 1-9 9" />
           </svg>
           {formatNumber(repo.forks_count)}
-        </a>
+        </button>
 
         {/* Updated */}
         <span className="repo-card__stat" aria-label={`Updated ${timeAgo(repo.updated_at)}`}>

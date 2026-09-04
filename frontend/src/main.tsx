@@ -9,12 +9,19 @@ import "./index.css";
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element #root not found in the DOM.");
 
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import OAuthCallback from "./pages/OAuthCallback";
+
 createRoot(rootElement).render(
   <StrictMode>
     <Provider store={store}>
-      {/* PersistGate delays rendering until persisted state is rehydrated */}
       <PersistGate loading={null} persistor={persistor}>
-        <App />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
+          </Routes>
+        </BrowserRouter>
       </PersistGate>
     </Provider>
   </StrictMode>
