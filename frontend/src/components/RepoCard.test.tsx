@@ -62,29 +62,9 @@ describe("RepoCard", () => {
     expect(screen.getByText("vitest")).toBeInTheDocument();
   });
 
-  test("shows alert when starring without login", async () => {
+  test("opens repository URL in a new tab when clicking star", () => {
     const store = createMockStore("github", null);
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    
-    render(
-      <Provider store={store}>
-        <RepoCard repo={mockRepo} />
-      </Provider>
-    );
-
-    const starBtn = screen.getByLabelText("1000 stars");
-    fireEvent.click(starBtn);
-    expect(alertMock).toHaveBeenCalledWith("Please login to github to star this repository.");
-    alertMock.mockRestore();
-  });
-
-  test("calls API when starring with login", async () => {
-    const store = createMockStore("github", "fake-token");
-    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    } as any);
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const openMock = vi.spyOn(window, "open").mockImplementation(() => null);
 
     render(
       <Provider store={store}>
@@ -95,13 +75,12 @@ describe("RepoCard", () => {
     const starBtn = screen.getByLabelText("1000 stars");
     fireEvent.click(starBtn);
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    });
+    expect(openMock).toHaveBeenCalledWith(
+      "https://github.com/vitest-dev/vitest",
+      "_blank",
+      "noopener,noreferrer"
+    );
 
-    expect(alertMock).toHaveBeenCalledWith("Starred successfully!");
-    
-    fetchMock.mockRestore();
-    alertMock.mockRestore();
+    openMock.mockRestore();
   });
 });
