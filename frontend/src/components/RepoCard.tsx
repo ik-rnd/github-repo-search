@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { GitHubRepository } from "../types";
+import { useAppSelector } from "../store/hooks";
 
 // Language colour map (subset of GitHub's language colours)
 const LANG_COLORS: Record<string, string> = {
@@ -47,6 +49,46 @@ interface RepoCardProps {
 
 export default function RepoCard({ repo }: RepoCardProps) {
   const langColor = repo.language ? (LANG_COLORS[repo.language] ?? "#8b949e") : null;
+  const provider = useAppSelector((s) => s.search.provider);
+  const authTokens = useAppSelector((s) => (s as any).auth?.tokens || {});
+
+  const [isStarring, setIsStarring] = useState(false);
+  const [isForking, setIsForking] = useState(false);
+
+  const handleAction = async (action: "star" | "fork") => {
+    const token = authTokens[provider];
+    if (!token) {
+      alert(`Please login to ${provider} to ${action} this repository.`);
+      return;
+    }
+
+    if (action === "star") setIsStarring(true);
+    if (action === "fork") setIsForking(true);
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
+      const res = await fetch(`${baseUrl}/api/repos/${action}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ repo_full_name: repo.full_name })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`${action === "star" ? "Starred" : "Forked"} successfully!`);
+      } else {
+        alert(data.error || `Failed to ${action}.`);
+      }
+    } catch (e) {
+      alert(`Network error during ${action}.`);
+    } finally {
+      if (action === "star") setIsStarring(false);
+      if (action === "fork") setIsForking(false);
+    }
+  };
 
   return (
     <article className="repo-card" aria-label={`Repository: ${repo.full_name}`}>
@@ -102,25 +144,23 @@ export default function RepoCard({ repo }: RepoCardProps) {
         )}
 
         {/* Stars */}
-        <a
-          href={`${repo.html_url}/stargazers`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="repo-card__stat repo-card__stat--link"
+        <button
+          onClick={() => handleAction("star")}
+          disabled={isStarring}
+          className="repo-card__stat repo-card__stat--link disabled:opacity-50"
           aria-label={`${repo.stargazers_count} stars`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          {formatNumber(repo.stargazers_count)}
-        </a>
+          {isStarring ? "..." : formatNumber(repo.stargazers_count)}
+        </button>
 
         {/* Forks */}
-        <a
-          href={`${repo.html_url}/forks`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="repo-card__stat repo-card__stat--link"
+        <button
+          onClick={() => handleAction("fork")}
+          disabled={isForking}
+          className="repo-card__stat repo-card__stat--link disabled:opacity-50"
           aria-label={`${repo.forks_count} forks`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -130,8 +170,8 @@ export default function RepoCard({ repo }: RepoCardProps) {
             <circle cx={6} cy={6} r={3} />
             <path d="M18 9a9 9 0 0 1-9 9" />
           </svg>
-          {formatNumber(repo.forks_count)}
-        </a>
+          {isForking ? "..." : formatNumber(repo.forks_count)}
+        </button>
 
         {/* Updated */}
         <span className="repo-card__stat" aria-label={`Updated ${timeAgo(repo.updated_at)}`}>

@@ -108,6 +108,9 @@ CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "search.auth.StatelessTokenAuthentication",
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -131,6 +134,15 @@ SPECTACULAR_SETTINGS = {
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_API_BASE_URL = "https://api.github.com"
 GITHUB_SEARCH_PER_PAGE = 30
+
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+
+GITLAB_CLIENT_ID = os.environ.get("GITLAB_CLIENT_ID", "")
+GITLAB_CLIENT_SECRET = os.environ.get("GITLAB_CLIENT_SECRET", "")
+
+CODEBERG_CLIENT_ID = os.environ.get("CODEBERG_CLIENT_ID", "")
+CODEBERG_CLIENT_SECRET = os.environ.get("CODEBERG_CLIENT_SECRET", "")
 
 # ---------------------------------------------------------------------------
 # Static files

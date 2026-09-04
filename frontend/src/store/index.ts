@@ -11,6 +11,7 @@ import {
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import searchReducer from "./searchSlice";
+import authReducer from "./authSlice";
 
 const persistConfig = {
   key: "github-searcher",
@@ -22,6 +23,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   search: persistReducer(persistConfig, searchReducer),
+  auth: persistReducer({ key: 'github-auth', version: 1, storage }, authReducer),
 });
 
 export const store = configureStore({
